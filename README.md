@@ -35,7 +35,6 @@ Python + Flask 写在一个目录里，数据存在本地 SQLite 文件中。装
 
 ## 环境要求
 
-- Windows
 - Python 3.10 或更高版本，安装时勾选 `Add Python to PATH`
 
 ## 快速开始
