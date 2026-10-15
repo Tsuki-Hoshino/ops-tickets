@@ -1,0 +1,116 @@
+{% set nav_active = 'settings' %}
+{% extends "layout.html" %}
+
+{% block title %}设置{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>设置</h1>
+  <div class="actions">
+    <a class="btn" href="{{ url_for('settings.users') }}">用户管理</a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head">站点设置</div>
+  <form class="form" method="post" action="{{ url_for('settings.update_site') }}">
+    <div class="form-grid">
+      <div class="field">
+        <label for="site_name">站点名称</label>
+        <input type="text" id="site_name" name="site_name" value="{{ s.site_name }}" required>
+        <div class="hint">显示在导航栏与浏览器标题上。</div>
+      </div>
+      <div class="field">
+        <label for="report_org">报告抬头 · 单位名称</label>
+        <input type="text" id="report_org" name="report_org" value="{{ s.report_org }}">
+        <div class="hint">默认留空，由使用者按本单位实际情况填写，会印在报告封面。</div>
+      </div>
+      <div class="field">
+        <label for="report_project">报告抬头 · 项目名称</label>
+        <input type="text" id="report_project" name="report_project" value="{{ s.report_project }}">
+        <div class="hint">默认留空。</div>
+      </div>
+      <div class="field">
+        <label for="report_author">报告抬头 · 编制人</label>
+        <input type="text" id="report_author" name="report_author" value="{{ s.report_author }}">
+        <div class="hint">默认留空。</div>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn primary" type="submit">保存站点设置</button>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <div class="card-head">大模型设置</div>
+  <form class="form" method="post" action="{{ url_for('settings.update_llm') }}">
+    <div class="form-grid">
+      <div class="field">
+        <label>启用状态</label>
+        <label>
+          <input type="checkbox" name="llm_enabled" value="1"{% if s.llm_enabled == '1' %} checked{% endif %}>
+          启用大模型撰写报告正文
+        </label>
+        <div class="hint">关闭、未配置或调用失败时，报告自动改用本地统计合成。</div>
+      </div>
+      <div class="field">
+        <label for="llm_api_base">API 地址</label>
+        <input type="text" id="llm_api_base" name="llm_api_base" value="{{ s.llm_api_base }}" placeholder="兼容 OpenAI 格式，例如 https://example.com/v1">
+        <div class="hint">填到服务根地址即可，路径 /chat/completions 由程序自动补全。</div>
+      </div>
+      <div class="field">
+        <label for="llm_api_key">API Key</label>
+        <input type="password" id="llm_api_key" name="llm_api_key" value="{{ '********' if s.llm_api_key else '' }}" autocomplete="new-password">
+        <div class="hint">留空或保持掩码表示不修改已保存的密钥。</div>
+      </div>
+      <div class="field">
+        <label for="llm_model">模型名</label>
+        <input type="text" id="llm_model" name="llm_model" value="{{ s.llm_model }}">
+      </div>
+      <div class="field">
+        <label for="llm_temperature">温度</label>
+        <input type="number" id="llm_temperature" name="llm_temperature" step="0.1" min="0" max="2" value="{{ s.llm_temperature }}">
+      </div>
+      <div class="field">
+        <label for="llm_timeout">超时（秒）</label>
+        <input type="number" id="llm_timeout" name="llm_timeout" step="1" min="5" max="600" value="{{ s.llm_timeout }}">
+      </div>
+      <div class="field">
+        <label for="llm_max_tokens">最大 token</label>
+        <input type="number" id="llm_max_tokens" name="llm_max_tokens" step="1" min="64" max="32768" value="{{ s.llm_max_tokens }}">
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn primary" type="submit">保存大模型设置</button>
+      <button class="btn" type="button" id="llm-test">测试连接</button>
+      <span id="llm-test-result" class="hint"></span>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// 测试连接：AJAX 调用后端，返回 JSON 后把结果显示在按钮右侧
+(function () {
+  var button = document.getElementById('llm-test');
+  var result = document.getElementById('llm-test-result');
+  if (!button || !result) { return; }
+  button.addEventListener('click', function () {
+    result.className = 'hint';
+    result.textContent = '正在测试连接…';
+    fetch('{{ url_for("settings.test_llm") }}', { method: 'POST' })
+      .then(function (response) { return response.json(); })
+      .then(function (data) {
+        result.textContent = data.message || (data.ok ? '连接成功' : '连接失败');
+        result.className = 'tag ' + (data.ok ? 'closed' : 'open');
+      })
+      .catch(function () {
+        result.textContent = '请求失败，请确认服务仍在运行';
+        result.className = 'tag open';
+      });
+  });
+})();
+</script>
+{% endblock %}

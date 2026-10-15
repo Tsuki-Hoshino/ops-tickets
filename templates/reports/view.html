@@ -1,0 +1,66 @@
+{% set nav_active = 'reports' %}
+{% extends "layout.html" %}
+
+{% block title %}{{ report['title'] }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>{{ report['title'] }}</h1>
+  <div class="actions">
+    <a class="btn primary" href="{{ url_for('reports.download', report_id=report['id']) }}">下载 Word</a>
+    <a class="btn" href="{{ url_for('reports.index') }}">返回列表</a>
+    <form class="inline-form" method="post" action="{{ url_for('reports.delete', report_id=report['id']) }}" data-confirm="确认删除该报告及其 Word 文件？">
+      <button class="btn danger" type="submit">删除</button>
+    </form>
+  </div>
+</div>
+
+{% if report['error_message'] %}
+<div class="flash error">大模型调用未成功，正文由本地统计合成：{{ report['error_message'] }}</div>
+{% endif %}
+
+<div class="card">
+  <dl class="kv">
+    <dt>统计周期</dt>
+    <dd>{{ report['period_start'] }} 至 {{ report['period_end'] }}{% if content.period_label %}（{{ content.period_label }}）{% endif %}</dd>
+    <dt>生成方式</dt>
+    <dd>{{ report['llm_model'] or '本地合成' }}</dd>
+    <dt>生成时间</dt>
+    <dd>{{ report['created_at'] or '—' }}</dd>
+    <dt>文件</dt>
+    <dd>{{ report['docx_path'] or '—' }}</dd>
+  </dl>
+</div>
+
+<div class="card">
+  <div class="card-head">本期统计</div>
+  <div class="toolbar">
+    共 {{ stats.total or 0 }} 条工单，已闭环 {{ stats.closed or 0 }} 条，未闭环 {{ stats.open or 0 }} 条，闭环率 {{ ((stats.close_rate or 0) * 100)|round(1) }}%。
+  </div>
+  <dl class="kv">
+    <dt>平均总时长</dt>
+    <dd>{{ stats.avg_total or '—' }}</dd>
+    <dt>平均响应时长</dt>
+    <dd>{{ stats.avg_response or '—' }}</dd>
+    <dt>平均处理时长</dt>
+    <dd>{{ stats.avg_handle or '—' }}</dd>
+  </dl>
+</div>
+
+<div class="card">
+  <div class="card-head">报告正文</div>
+  {% for section in content.sections or [] %}
+  <h3>{{ section.heading }}</h3>
+  {% for paragraph in section.paragraphs %}
+  <p>{{ paragraph }}</p>
+  {% endfor %}
+  {% else %}
+  <p class="empty">报告正文为空。</p>
+  {% endfor %}
+
+  {% for attachment in content.attachments or [] %}
+  <h3>{{ attachment.heading }}</h3>
+  <p class="hint">随文档附现场照片 {{ attachment.images|length }} 张，请在下载的 Word 文档中查看。</p>
+  {% endfor %}
+</div>
+{% endblock %}

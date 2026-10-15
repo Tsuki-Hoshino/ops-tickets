@@ -1,0 +1,54 @@
+{% set nav_active = 'reports' %}
+{% extends "layout.html" %}
+
+{% block title %}报告列表{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>报告列表</h1>
+  <div class="toolbar">
+    <a class="btn primary" href="{{ url_for('reports.generate') }}">生成报告</a>
+  </div>
+</div>
+
+<div class="card">
+  {% if reports %}
+  <table class="table">
+    <thead>
+      <tr>
+        <th>标题</th>
+        <th>统计周期</th>
+        <th>状态</th>
+        <th>生成方式</th>
+        <th>生成时间</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in reports %}
+      <tr>
+        <td><a href="{{ url_for('reports.view', report_id=r['id']) }}">{{ r['title'] }}</a></td>
+        <td>{{ r['period_start'] }} 至 {{ r['period_end'] }}</td>
+        <td>
+          {% if r['status'] == 'generated' %}<span class="tag closed">已生成</span>
+          {% elif r['status'] == 'failed' %}<span class="tag open">生成失败</span>
+          {% else %}<span class="tag">草稿</span>{% endif %}
+        </td>
+        <td>{{ r['llm_model'] or '本地合成' }}</td>
+        <td>{{ r['created_at'] or '—' }}</td>
+        <td>
+          <a class="btn mini" href="{{ url_for('reports.view', report_id=r['id']) }}">查看</a>
+          <a class="btn mini" href="{{ url_for('reports.download', report_id=r['id']) }}">下载</a>
+          <form class="inline-form" method="post" action="{{ url_for('reports.delete', report_id=r['id']) }}" data-confirm="确认删除该报告及其 Word 文件？">
+            <button class="btn mini danger" type="submit">删除</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty">还没有生成过报告。点击右上角「生成报告」，选择周期后即可生成 Word 文档。</p>
+  {% endif %}
+</div>
+{% endblock %}

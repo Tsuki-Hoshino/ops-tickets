@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ site_name or '运维工单系统' }}{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+  <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+</head>
+<body>
+
+{# 未登录只保留「总览」与「登录」入口，其余导航项登录后才出现 #}
+<header class="topbar">
+  <div class="brand">{{ site_name or '运维工单系统' }}</div>
+  <nav class="nav">
+    <a href="{{ url_for('dashboard.index') }}"{% if nav_active is defined and nav_active == 'dashboard' %} class="active"{% endif %}>总览</a>
+    {% if current_user %}
+    <a href="{{ url_for('records.list') }}"{% if nav_active is defined and nav_active == 'records' %} class="active"{% endif %}>工单</a>
+    <a href="{{ url_for('exports.index') }}"{% if nav_active is defined and nav_active == 'export' %} class="active"{% endif %}>导出</a>
+    <a href="{{ url_for('reports.index') }}"{% if nav_active is defined and nav_active == 'reports' %} class="active"{% endif %}>报告</a>
+    {% if current_user['role'] == 'admin' %}
+    <a href="{{ url_for('settings.index') }}"{% if nav_active is defined and nav_active == 'settings' %} class="active"{% endif %}>设置</a>
+    {% endif %}
+    {% endif %}
+  </nav>
+  <div class="userbox">
+    {% if current_user %}
+    <span>{{ current_user['display_name'] or current_user['username'] }}</span>
+    {# 退出必须走 POST，避免被预取或误触 #}
+    <form class="inline-form" method="post" action="{{ url_for('auth.logout') }}">
+      <button type="submit" class="btn mini">退出</button>
+    </form>
+    {% else %}
+    <span class="hint">未登录 · 只读浏览</span>
+    <a class="btn mini" href="{{ url_for('auth.login') }}">登录</a>
+    {% endif %}
+  </div>
+</header>
+
+<main class="wrap">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+  <div class="flash {{ category }}">{{ message }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  {% block content %}{% endblock %}
+</main>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>

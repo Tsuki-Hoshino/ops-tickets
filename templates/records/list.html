@@ -1,0 +1,121 @@
+{% set nav_active = 'records' %}
+{% extends "layout.html" %}
+
+{% block title %}工单列表{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>工单列表</h1>
+  <div class="actions">
+    <a class="btn primary" href="{{ url_for('records.new') }}">新建工单</a>
+  </div>
+</div>
+
+<form class="filters" method="get" action="{{ url_for('records.list') }}">
+  <div class="field">
+    <label for="f-department">部门</label>
+    <select id="f-department" name="department">
+      <option value="">全部</option>
+      {% for d in departments %}
+      <option value="{{ d }}"{% if filters.department == d %} selected{% endif %}>{{ d }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label for="f-category">类别</label>
+    <select id="f-category" name="category">
+      <option value="">全部</option>
+      {% for c in categories %}
+      <option value="{{ c }}"{% if filters.category == c %} selected{% endif %}>{{ c }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label for="f-status">状态</label>
+    <select id="f-status" name="status">
+      <option value="">全部</option>
+      <option value="open"{% if filters.status == 'open' %} selected{% endif %}>未闭环</option>
+      <option value="closed"{% if filters.status == 'closed' %} selected{% endif %}>已闭环</option>
+    </select>
+  </div>
+  <div class="field">
+    <label for="f-start">起始日期</label>
+    <input type="date" id="f-start" name="start" value="{{ filters.start or '' }}">
+  </div>
+  <div class="field">
+    <label for="f-end">截止日期</label>
+    <input type="date" id="f-end" name="end" value="{{ filters.end or '' }}">
+  </div>
+  <div class="field">
+    <label for="f-q">关键词</label>
+    <input type="text" id="f-q" name="q" value="{{ filters.q or '' }}" placeholder="需求/故障、原因、处理方法">
+  </div>
+  <div class="actions">
+    <button class="btn primary" type="submit">查询</button>
+    <a class="btn" href="{{ url_for('records.list') }}">重置</a>
+  </div>
+</form>
+
+<div class="toolbar">共 {{ total }} 条工单{% if pages > 1 %}，第 {{ page }} / {{ pages }} 页{% endif %}</div>
+
+{% if records %}
+<table class="table">
+  <thead>
+    <tr>
+      <th>报修时间</th>
+      <th>部门</th>
+      <th>类别</th>
+      <th>需求/故障</th>
+      <th>状态</th>
+      <th>操作人</th>
+      <th>操作</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in records %}
+    <tr{% if r['status'] == 'closed' %} class="closed"{% endif %}>
+      <td>{{ (r['reported_at'] or '')[:16] }}</td>
+      <td>{{ r['department'] or '—' }}</td>
+      <td>{{ r['category'] or '—' }}</td>
+      <td><a href="{{ url_for('records.detail', record_id=r['id']) }}">{{ r['symptom'] }}</a></td>
+      <td>
+        {% if r['status'] == 'closed' %}<span class="tag closed">已闭环</span>{% else %}<span class="tag open">未闭环</span>{% endif %}
+      </td>
+      <td>{{ r['operator'] or '—' }}</td>
+      <td>
+        <div class="actions">
+          <a class="btn mini" href="{{ url_for('records.detail', record_id=r['id']) }}">查看</a>
+          <a class="btn mini" href="{{ url_for('records.edit', record_id=r['id']) }}">编辑</a>
+          <form class="inline-form" method="post" action="{{ url_for('records.delete', record_id=r['id']) }}" data-confirm="确认删除该工单及其照片？">
+            <button class="btn mini danger" type="submit">删除</button>
+          </form>
+        </div>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<div class="empty">没有符合条件的工单，可调整筛选条件或新建工单。</div>
+{% endif %}
+
+{% if pages > 1 %}
+{% set win_start = [1, page - 2]|max %}
+{% set win_end = [pages, page + 2]|min %}
+<div class="pager">
+  {% if page > 1 %}
+  <a href="{{ url_for('records.list', page=page - 1, department=filters.department, category=filters.category, status=filters.status, start=filters.start, end=filters.end, q=filters.q) }}">上一页</a>
+  {% endif %}
+  {% for p in range(win_start, win_end + 1) %}
+    {% if p == page %}
+  <span class="cur">{{ p }}</span>
+    {% else %}
+  <a href="{{ url_for('records.list', page=p, department=filters.department, category=filters.category, status=filters.status, start=filters.start, end=filters.end, q=filters.q) }}">{{ p }}</a>
+    {% endif %}
+  {% endfor %}
+  {% if page < pages %}
+  <a href="{{ url_for('records.list', page=page + 1, department=filters.department, category=filters.category, status=filters.status, start=filters.start, end=filters.end, q=filters.q) }}">下一页</a>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

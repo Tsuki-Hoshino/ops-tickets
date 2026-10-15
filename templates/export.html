@@ -1,0 +1,92 @@
+{% set nav_active = 'export' %}
+{% set open_checked = form.include_open in [1, '1', true] %}
+{% set photos_checked = form.embed_photos in [1, '1', true] %}
+{% extends "layout.html" %}
+
+{% block title %}Excel 台账导出{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>Excel 台账导出</h1>
+</div>
+
+<form class="filters" method="get" action="{{ url_for('exports.index') }}">
+  <div class="field">
+    <label for="year">年份</label>
+    <input type="number" id="year" name="year" min="2000" max="2100" step="1" value="{{ year }}">
+  </div>
+  <div class="field">
+    <label for="month">月份</label>
+    <select id="month" name="month">
+      {% for m in range(1, 13) %}
+      <option value="{{ m }}"{% if m == month %} selected{% endif %}>{{ m }} 月</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="actions">
+    <button class="btn primary" type="submit">预览</button>
+  </div>
+</form>
+
+<div class="card">
+  <div class="card-head">{{ year }} 年 {{ month }} 月台账预览</div>
+  <div class="toolbar">该月共 {{ record_count }} 条工单，{{ photo_count }} 张照片。</div>
+  {% if not has_data %}
+  <div class="empty">该月没有工单数据，导出按钮已禁用。请换一个月份，或先登记工单。</div>
+  {% endif %}
+</div>
+
+<form class="form" id="export-form" method="post" action="{{ url_for('exports.download') }}">
+  <input type="hidden" name="year" value="{{ year }}">
+  <input type="hidden" name="month" value="{{ month }}">
+
+  <div class="form-grid">
+    <div class="field">
+      <label>排版模式</label>
+      <label><input type="radio" name="group_mode" value="grouped"{% if form.group_mode != 'full' %} checked{% endif %}> 按日期分组</label>
+      <label><input type="radio" name="group_mode" value="full"{% if form.group_mode == 'full' %} checked{% endif %}> 每行完整日期时间</label>
+      <div class="hint">按日期分组：每天先写一行日期，再写当天工单；每行完整日期时间：A 列直接写完整时间，不再分组。</div>
+    </div>
+    <div class="field">
+      <label>可选内容</label>
+      <label><input type="checkbox" name="include_open" value="1"{% if open_checked %} checked{% endif %}> 包含未闭环工单（只填了报修时间的工单）</label>
+      <label><input type="checkbox" name="embed_photos" value="1"{% if photos_checked %} checked{% endif %}> 内嵌工单照片（处理前、处理后各 1 张）</label>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn primary" type="submit"{% if not has_data %} disabled{% endif %}>导出 Excel</button>
+    <span class="hint">{% if has_data %}导出为 xlsx，工作表名为「{{ month }}月」。{% else %}该月无数据，无法导出。{% endif %}</span>
+  </div>
+</form>
+
+{% if preview_rows %}
+<div class="card">
+  <div class="card-head">数据预览（前 {{ preview_rows|length }} 条）</div>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>开始时间</th>
+        <th>部门</th>
+        <th>需求/故障</th>
+        <th>原因</th>
+        <th>处理方法</th>
+        <th>完成时间</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in preview_rows %}
+      <tr{% if r['status'] == 'closed' %} class="closed"{% endif %}>
+        <td>{{ (r['reported_at'] or '')[:16] }}</td>
+        <td>{{ r['department'] or '—' }}</td>
+        <td>{{ r['symptom'] or '—' }}</td>
+        <td>{{ r['cause'] or '—' }}</td>
+        <td>{{ r['solution'] or '—' }}</td>
+        <td>{{ (r['finished_at'] or '')[:16] or '—' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endblock %}

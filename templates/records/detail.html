@@ -1,0 +1,114 @@
+{% set nav_active = 'records' %}
+{% extends "layout.html" %}
+
+{% block title %}工单详情{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>工单详情</h1>
+  <div class="actions">
+    <a class="btn primary" href="{{ url_for('records.edit', record_id=record['id']) }}">编辑</a>
+    <a class="btn" href="{{ url_for('records.list') }}">返回列表</a>
+    <form class="inline-form" method="post" action="{{ url_for('records.delete', record_id=record['id']) }}" data-confirm="确认删除该工单及其照片？">
+      <button class="btn danger" type="submit">删除</button>
+    </form>
+  </div>
+</div>
+
+{% if anomaly %}
+<div class="flash error">完成时间早于报修时间，该工单的时间存在倒挂，请核实后修正。</div>
+{% endif %}
+
+<div class="card">
+  <div class="card-head">工单信息</div>
+  <dl class="kv">
+    <dt>报修时间</dt>
+    <dd>{{ record['reported_at'] or '—' }}</dd>
+    <dt>到场时间</dt>
+    <dd>{{ record['arrived_at'] or '—' }}</dd>
+    <dt>完成时间</dt>
+    <dd>{{ record['finished_at'] or '—' }}</dd>
+    <dt>部门</dt>
+    <dd>{{ record['department'] or '—' }}</dd>
+    <dt>类别</dt>
+    <dd>{{ record['category'] or '—' }}</dd>
+    <dt>需求/故障</dt>
+    <dd>{{ record['symptom'] or '—' }}</dd>
+    <dt>原因</dt>
+    <dd>{{ record['cause'] or '—' }}</dd>
+    <dt>处理方法</dt>
+    <dd>{{ record['solution'] or '—' }}</dd>
+    <dt>操作人</dt>
+    <dd>{{ record['operator'] or '—' }}</dd>
+    <dt>备注</dt>
+    <dd>{{ record['notes'] or '—' }}</dd>
+    <dt>状态</dt>
+    <dd>
+      {% if record['status'] == 'closed' %}<span class="tag closed">已闭环</span>{% else %}<span class="tag open">未闭环</span>{% endif %}
+    </dd>
+    <dt>创建时间</dt>
+    <dd>{{ record['created_at'] or '—' }}</dd>
+    <dt>更新时间</dt>
+    <dd>{{ record['updated_at'] or '—' }}</dd>
+  </dl>
+</div>
+
+<div class="card">
+  <div class="card-head">处理时长</div>
+  <dl class="kv">
+    <dt>总时长</dt>
+    <dd>{{ durations.total or '—' }}</dd>
+    <dt>响应时长</dt>
+    <dd>{{ durations.response or '—' }}</dd>
+    <dt>处理时长</dt>
+    <dd>{{ durations.handle or '—' }}</dd>
+  </dl>
+  <div class="hint">总时长＝完成时间－报修时间；响应时长＝到场时间－报修时间；处理时长＝完成时间－到场时间。缺一端的时间不计入。</div>
+</div>
+
+<div class="card">
+  <div class="card-head">处理前照片（{{ photos_before|length }} 张）</div>
+  {% if photos_before %}
+  <div class="photo-grid">
+    {% for p in photos_before %}
+    <div class="photo-item">
+      <a class="photo-zoom" href="{{ url_for('main.uploaded_file', filename=p['filename']) }}">
+        <img src="{{ url_for('main.uploaded_file', filename=p['filename']) }}" alt="处理前照片">
+      </a>
+      <div class="photo-meta">
+        第 {{ loop.index }} 张
+        <form class="inline-form" method="post" action="{{ url_for('records.delete_photo', record_id=record['id'], photo_id=p['id']) }}" data-confirm="确认删除这张处理前照片？">
+          <button class="btn mini danger" type="submit">删除</button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty">暂无处理前照片。</div>
+  {% endif %}
+</div>
+
+<div class="card">
+  <div class="card-head">处理后照片（{{ photos_after|length }} 张）</div>
+  {% if photos_after %}
+  <div class="photo-grid">
+    {% for p in photos_after %}
+    <div class="photo-item">
+      <a class="photo-zoom" href="{{ url_for('main.uploaded_file', filename=p['filename']) }}">
+        <img src="{{ url_for('main.uploaded_file', filename=p['filename']) }}" alt="处理后照片">
+      </a>
+      <div class="photo-meta">
+        第 {{ loop.index }} 张
+        <form class="inline-form" method="post" action="{{ url_for('records.delete_photo', record_id=record['id'], photo_id=p['id']) }}" data-confirm="确认删除这张处理后照片？">
+          <button class="btn mini danger" type="submit">删除</button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty">暂无处理后照片。</div>
+  {% endif %}
+</div>
+{% endblock %}

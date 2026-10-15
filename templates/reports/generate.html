@@ -1,0 +1,129 @@
+{% set nav_active = 'reports' %}
+{% extends "layout.html" %}
+
+{% block title %}生成报告{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>生成报告</h1>
+  <div class="actions">
+    <a class="btn" href="{{ url_for('reports.index') }}">返回列表</a>
+  </div>
+</div>
+
+{# 单表单双按钮：预览与生成用同一份周期设置，避免两处状态不一致 #}
+<form class="form" method="post" action="{{ url_for('reports.generate') }}">
+  <div class="form-grid">
+    <div class="field">
+      <label for="period">统计周期</label>
+      <select id="period" name="period">
+        {% for value, label in presets %}
+        <option value="{{ value }}"{% if form.period == value %} selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field" id="custom-range">
+      <label for="start">自定义起止日期</label>
+      <input type="date" id="start" name="start" value="{{ form.start }}">
+      <input type="date" id="end" name="end" value="{{ form.end }}">
+      <div class="hint">仅在选择「自定义」时生效；结束日期早于开始日期时会自动对调。</div>
+    </div>
+    <div class="field">
+      <label for="title">报告标题</label>
+      <input type="text" id="title" name="title" value="{{ form.title }}" placeholder="留空则按周期自动命名，例如「运维服务工作月报」">
+    </div>
+    <div class="field">
+      <label>大模型</label>
+      <label>
+        <input type="checkbox" name="use_llm" value="1"{% if form.use_llm %} checked{% endif %}{% if not llm_ready %} disabled{% endif %}>
+        调用大模型撰写正文
+      </label>
+      <div class="hint">
+        {% if llm_ready %}模型返回的全部章节都会做容错解析，调用失败自动降级为本地合成。{% else %}尚未在设置页配置大模型，将使用本地合成（用本期统计数据拼装正文）。{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn" type="submit" name="action" value="preview">预览统计</button>
+    <button class="btn primary" type="submit" name="action" value="generate">生成报告</button>
+  </div>
+</form>
+
+{% if preview %}
+<div class="card">
+  <div class="card-head">统计预览 · {{ preview.period_label }}</div>
+  <div class="toolbar">
+    共 {{ preview.total }} 条工单，已闭环 {{ preview.closed }} 条，未闭环 {{ preview.open }} 条，闭环率 {{ (preview.close_rate * 100)|round(1) }}%。
+  </div>
+  <dl class="kv">
+    <dt>平均总时长</dt>
+    <dd>{{ preview.avg_total or '—' }}</dd>
+    <dt>平均响应时长</dt>
+    <dd>{{ preview.avg_response or '—' }}</dd>
+    <dt>平均处理时长</dt>
+    <dd>{{ preview.avg_handle or '—' }}</dd>
+  </dl>
+</div>
+
+<div class="card">
+  <h2 class="card-head">按部门分布</h2>
+  {% if preview.dept_dist %}
+  <div class="bar-list">
+    {% for item in preview.dept_dist %}
+    <div class="bar-row">
+      <div class="bar-label" title="{{ item.name }}">{{ item.name }}</div>
+      <div class="bar-track"><div class="bar-fill" style="width: {{ (item.ratio * 100)|round(1) }}%"></div></div>
+      <div class="bar-value">{{ item.count }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="empty">该周期没有工单</p>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h2 class="card-head">按类别分布</h2>
+  {% if preview.cat_dist %}
+  <div class="bar-list">
+    {% for item in preview.cat_dist %}
+    <div class="bar-row">
+      <div class="bar-label" title="{{ item.name }}">{{ item.name }}</div>
+      <div class="bar-track"><div class="bar-fill" style="width: {{ (item.ratio * 100)|round(1) }}%"></div></div>
+      <div class="bar-value">{{ item.count }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="empty">该周期没有工单</p>
+  {% endif %}
+</div>
+
+{% if preview.anomalies %}
+<div class="card">
+  <div class="card-head">时间倒挂工单（不计入时长统计）</div>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>工单号</th>
+        <th>需求/故障</th>
+        <th>报修时间</th>
+        <th>完成时间</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in preview.anomalies %}
+      <tr class="closed">
+        <td>#{{ item.id }}</td>
+        <td>{{ item.symptom or '—' }}</td>
+        <td>{{ item.reported_at or '—' }}</td>
+        <td>{{ item.finished_at or '—' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endif %}
+{% endblock %}

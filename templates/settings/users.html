@@ -1,0 +1,65 @@
+{% set nav_active = 'settings' %}
+{% extends "layout.html" %}
+
+{% block title %}用户管理{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>用户管理</h1>
+  <div class="actions">
+    <a class="btn primary" href="{{ url_for('settings.user_new') }}">新增用户</a>
+    <a class="btn" href="{{ url_for('settings.index') }}">返回设置</a>
+  </div>
+</div>
+
+<div class="card">
+  {% if users %}
+  <table class="table">
+    <thead>
+      <tr>
+        <th>用户名</th>
+        <th>显示名</th>
+        <th>角色</th>
+        <th>状态</th>
+        <th>最后登录</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in users %}
+      <tr{% if not u['is_active'] %} class="closed"{% endif %}>
+        <td>{{ u['username'] }}{% if current_user and u['id'] == current_user['id'] %} <span class="tag">当前账号</span>{% endif %}</td>
+        <td>{{ u['display_name'] or '—' }}</td>
+        <td>{{ '管理员' if u['role'] == 'admin' else '编辑' }}</td>
+        <td>{% if u['is_active'] %}<span class="tag closed">启用</span>{% else %}<span class="tag open">停用</span>{% endif %}</td>
+        <td>{{ u['last_login_at'] or '—' }}</td>
+        <td>
+          <a class="btn mini" href="{{ url_for('settings.user_edit', user_id=u['id']) }}">编辑</a>
+          <details class="inline-form">
+            <summary class="btn mini">重置密码</summary>
+            <form class="form" method="post" action="{{ url_for('settings.user_reset_password', user_id=u['id']) }}">
+              <div class="field">
+                <label for="password-{{ u['id'] }}">新密码</label>
+                <input type="password" id="password-{{ u['id'] }}" name="password" autocomplete="new-password" required>
+              </div>
+              <div class="field">
+                <label for="password2-{{ u['id'] }}">确认新密码</label>
+                <input type="password" id="password2-{{ u['id'] }}" name="password2" autocomplete="new-password" required>
+              </div>
+              <button class="btn mini primary" type="submit">确认重置</button>
+            </form>
+          </details>
+          <form class="inline-form" method="post" action="{{ url_for('settings.user_delete', user_id=u['id']) }}" data-confirm="确认删除用户 {{ u['username'] }}？">
+            <button class="btn mini danger" type="submit">删除</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty">还没有用户。</p>
+  {% endif %}
+  <div class="hint">安全约束：不能停用或删除最后一个管理员，也不能删除当前登录的账号。编辑用户时密码框留空或仍是掩码，则不会覆盖原密码。</div>
+</div>
+{% endblock %}

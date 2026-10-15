@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ code }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>{{ code }}</h1>
+  <div class="actions">
+    <a class="btn" href="{{ url_for('dashboard.index') }}">返回总览</a>
+  </div>
+</div>
+
+<div class="card">
+  <p>{{ message }}</p>
+</div>
+{% endblock %}

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>安装向导 · 运维工单系统</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body>
+
+<main class="wrap">
+  <div class="page-head">
+    <h1>安装向导</h1>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+  <div class="flash {{ category }}">{{ message }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <div class="card" style="max-width:520px;margin:0 auto;">
+    <h2 class="card-head">初始化站点</h2>
+
+    {% if error %}
+    <div class="flash error">{{ error }}</div>
+    {% endif %}
+
+    <p>首次运行需要创建数据库与管理员账号。填写以下信息并提交，完成后即可登录使用。</p>
+
+    <form class="form" method="post" action="{{ url_for('auth.install') }}">
+      <div class="field">
+        <label for="site_name">站点名称 <span class="req">*</span></label>
+        <input id="site_name" name="site_name" type="text"
+               value="{{ (form or {}).get('site_name', '') }}" autofocus required>
+        <p class="hint">显示在导航栏与报告封面。</p>
+      </div>
+
+      <div class="field">
+        <label for="username">管理员账号 <span class="req">*</span></label>
+        <input id="username" name="username" type="text"
+               value="{{ (form or {}).get('username', '') }}" autocomplete="username" required>
+      </div>
+
+      <div class="field">
+        <label for="display_name">管理员姓名</label>
+        <input id="display_name" name="display_name" type="text"
+               value="{{ (form or {}).get('display_name', '') }}">
+        <p class="hint">留空时界面显示账号名。</p>
+      </div>
+
+      <div class="field">
+        <label for="password">密码 <span class="req">*</span></label>
+        <input id="password" name="password" type="password" autocomplete="new-password" required>
+      </div>
+
+      <div class="field">
+        <label for="password2">确认密码 <span class="req">*</span></label>
+        <input id="password2" name="password2" type="password" autocomplete="new-password" required>
+      </div>
+
+      <div class="actions">
+        <button type="submit" class="btn primary">开始安装</button>
+      </div>
+    </form>
+  </div>
+</main>
+
+</body>
+</html>

@@ -1,0 +1,878 @@
+/* ==========================================================================
+   运维工单系统 · 全局样式表（手写 CSS）
+
+   视觉基调：内网内部工具，朴素、信息密度高。
+   层次只用三样东西表达：1px 边框、极浅背景、字号与间距。
+   配色：中性石灰底 + 单一强调色 --accent（深蓝），状态色只用于文字。
+
+   类名与 templates/ 的模板、static/js/ 的脚本一一对应，改名需三处同步。
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. 变量与全局重置
+   -------------------------------------------------------------------------- */
+
+:root {
+  --ink: #1c1c1c;          /* 主文字 */
+  --ink-soft: #5c5c5c;     /* 次要文字 */
+  --ink-faint: #8a8a8a;    /* 辅助文字、占位符 */
+  --bg: #f3f3f1;           /* 页面底色 */
+  --surface: #ffffff;      /* 卡片、表格底色 */
+  --line: #d8d8d4;         /* 常规边框 */
+  --line-soft: #e8e8e4;    /* 极浅分隔线、隔行底色 */
+  --accent: #1f4e79;       /* 唯一强调色：深蓝 */
+  --accent-soft: #eef2f6;  /* 强调色的极浅底色 */
+  --open: #9a5b1e;         /* 未闭环（文字色） */
+  --closed: #2f6f4f;       /* 已闭环（文字色） */
+  --danger: #a12b2b;       /* 危险操作 */
+
+  --font: "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  font: 14px/1.6 var(--font);
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+h1, h2, h3, h4 {
+  margin: 0;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+p {
+  margin: 0 0 8px;
+}
+
+hr {
+  height: 1px;
+  margin: 12px 0;
+  border: 0;
+  background: var(--line-soft);
+}
+
+/* 键盘焦点始终可见，鼠标点击不出现轮廓 */
+:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* 表格数字等宽，便于纵向比对 */
+.tabular,
+.table td,
+.stat .num,
+.kv dd,
+.pager {
+  font-variant-numeric: tabular-nums;
+}
+
+/* --------------------------------------------------------------------------
+   2. 顶部导航：.topbar .brand .nav .nav a .nav a.active .userbox
+   -------------------------------------------------------------------------- */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 46px;
+  padding: 0 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+
+.brand {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.brand:hover {
+  text-decoration: none;
+}
+
+.nav {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.nav a {
+  display: block;
+  padding: 12px 12px;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.nav a:hover {
+  color: var(--ink);
+  background: var(--line-soft);
+  text-decoration: none;
+}
+
+.nav a.active {
+  color: var(--accent);
+  font-weight: 700;
+  background: var(--accent-soft);
+}
+
+.userbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink-soft);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+/* --------------------------------------------------------------------------
+   3. 页面骨架：.wrap .page-head
+   -------------------------------------------------------------------------- */
+
+.wrap {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px 16px 40px;
+}
+
+.page-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+}
+
+.page-head h1 {
+  font-size: 18px;
+}
+
+.page-head .sub,
+.page-head .meta {
+  color: var(--ink-faint);
+  font-size: 13px;
+}
+
+/* --------------------------------------------------------------------------
+   4. 提示信息：.flash .flash.success .flash.error
+   -------------------------------------------------------------------------- */
+
+.flash {
+  margin-bottom: 10px;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  font-size: 13px;
+}
+
+.flash.success {
+  border-color: var(--closed);
+  background: var(--surface);
+  color: var(--closed);
+}
+
+.flash.error {
+  border-color: var(--danger);
+  background: var(--surface);
+  color: var(--danger);
+}
+
+/* --------------------------------------------------------------------------
+   5. 卡片与工具条：.card .card-head .toolbar
+   注意：.card 没有任何 hover 效果，层次只靠 1px 边框与白底。
+   -------------------------------------------------------------------------- */
+
+.card {
+  margin-bottom: 14px;
+  padding: 12px 14px 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: -2px 0 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.card-head h2,
+.card-head h3 {
+  font-size: 15px;
+}
+
+.card-head .meta,
+.card-head .sub {
+  color: var(--ink-faint);
+  font-size: 13px;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.toolbar .spacer {
+  flex: 1 1 auto;
+}
+
+/* --------------------------------------------------------------------------
+   6. 数字卡片：.stat-grid .stat .stat .num .stat .label
+   -------------------------------------------------------------------------- */
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.stat {
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+}
+
+.stat .num {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.stat .label {
+  margin-top: 2px;
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+/* --------------------------------------------------------------------------
+   7. 横条分布图（纯 CSS 条形）：
+      .bar-list .bar-row .bar-label .bar-track .bar-fill .bar-value
+   -------------------------------------------------------------------------- */
+
+.bar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bar-row {
+  display: grid;
+  grid-template-columns: 152px 1fr 88px;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.bar-label {
+  overflow: hidden;
+  color: var(--ink-soft);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bar-track {
+  height: 12px;
+  background: var(--line-soft);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+/* 单色填充：唯一强调色 */
+.bar-fill {
+  height: 100%;
+  background: var(--accent);
+}
+
+.bar-value {
+  color: var(--ink-soft);
+  text-align: right;
+}
+
+/* --------------------------------------------------------------------------
+   8. 表格：.table（紧凑） .table th .table td .table tr.closed
+      td 内边距 5px 8px、字号 13px，保持台账式的紧凑观感。
+   -------------------------------------------------------------------------- */
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface);
+  font-size: 13px;
+}
+
+.table th,
+.table td {
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--line-soft);
+  text-align: left;
+  vertical-align: top;
+}
+
+.table th {
+  background: var(--line-soft);
+  border-bottom: 1px solid var(--line);
+  color: var(--ink-soft);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.table tbody tr:hover {
+  background: var(--accent-soft);
+}
+
+.table td.num,
+.table th.num {
+  text-align: right;
+}
+
+.table td.actions-cell,
+.table th.actions-cell {
+  white-space: nowrap;
+}
+
+.table td .sub,
+.table td .meta {
+  color: var(--ink-faint);
+  font-size: 12px;
+}
+
+/* 已闭环行：整行文字转次要色，配合 .tag.closed 表达状态 */
+.table tr.closed td {
+  color: var(--ink-soft);
+}
+
+.table tr.closed td .sub {
+  color: var(--ink-faint);
+}
+
+/* 表格外层横向滚动容器 */
+.table-wrap {
+  overflow-x: auto;
+}
+
+/* --------------------------------------------------------------------------
+   9. 状态标签：.tag .tag.open .tag.closed
+   -------------------------------------------------------------------------- */
+
+.tag {
+  display: inline-block;
+  padding: 0 5px;
+  border: 1px solid var(--ink-faint);
+  border-radius: 2px;
+  color: var(--ink-soft);
+  font-size: 12px;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.tag.open {
+  border-color: var(--open);
+  color: var(--open);
+}
+
+.tag.closed {
+  border-color: var(--closed);
+  color: var(--closed);
+}
+
+/* --------------------------------------------------------------------------
+   10. 按钮：.btn .btn.primary .btn.danger .btn.mini .btn[disabled]
+   -------------------------------------------------------------------------- */
+
+.btn {
+  display: inline-block;
+  padding: 5px 12px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  background: var(--surface);
+  color: var(--ink);
+  font: 13px/1.5 var(--font);
+  text-align: center;
+  cursor: pointer;
+}
+
+.btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.btn.primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #ffffff;
+}
+
+.btn.primary:hover {
+  background: #1a4266;
+  color: #ffffff;
+}
+
+.btn.danger {
+  border-color: var(--danger);
+  background: var(--surface);
+  color: var(--danger);
+}
+
+.btn.danger:hover {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #ffffff;
+}
+
+.btn.mini {
+  padding: 1px 7px;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.btn[disabled],
+.btn.disabled {
+  border-color: var(--line);
+  background: var(--line-soft);
+  color: var(--ink-faint);
+  cursor: not-allowed;
+}
+
+.btn[disabled]:hover,
+.btn.disabled:hover {
+  border-color: var(--line);
+  background: var(--line-soft);
+  color: var(--ink-faint);
+}
+
+/* --------------------------------------------------------------------------
+   11. 表单：.form .form-grid .field .field label .field input .field select
+       .field textarea .field .hint .req
+   -------------------------------------------------------------------------- */
+
+.form {
+  margin: 0;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 14px;
+}
+
+.form-grid .span-2 {
+  grid-column: 1 / -1;
+}
+
+.field {
+  margin-bottom: 10px;
+  min-width: 0;
+}
+
+/* .form-grid 内的字段由网格 gap 控制间距，避免叠加空行 */
+.form-grid .field {
+  margin-bottom: 0;
+}
+
+.field > label {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.field input[type="text"],
+.field input[type="password"],
+.field input[type="date"],
+.field input[type="number"],
+.field input[type="search"],
+.field input[type="datetime-local"],
+.field input[type="file"],
+.field select,
+.field textarea {
+  width: 100%;
+  padding: 4px 6px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  background: var(--surface);
+  color: var(--ink);
+  font: 13px/1.5 var(--font);
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: var(--accent);
+}
+
+.field textarea {
+  min-height: 72px;
+  resize: vertical;
+}
+
+.field select[multiple] {
+  min-height: 96px;
+}
+
+.field input[readonly],
+.field input[disabled],
+.field select[disabled],
+.field textarea[disabled] {
+  background: var(--line-soft);
+  color: var(--ink-soft);
+  cursor: not-allowed;
+}
+
+.field .hint {
+  margin-top: 3px;
+  color: var(--ink-faint);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* 必填星号：用文字色强调 */
+.req {
+  margin-left: 2px;
+  color: var(--danger);
+}
+
+/* 复选框 / 单选框所在字段 */
+.field.check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.field.check > label {
+  margin: 0;
+}
+
+.field.check input[type="checkbox"],
+.field.check input[type="radio"] {
+  width: auto;
+  margin: 0;
+}
+
+/* 自定义报告区间（app.js 控制显隐） */
+.range-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 14px;
+}
+
+/* --------------------------------------------------------------------------
+   12. 行内表单 / 操作区 / 筛选区：.inline-form .actions .filters
+   -------------------------------------------------------------------------- */
+
+.inline-form {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  vertical-align: middle;
+}
+
+.inline-form select,
+.inline-form input[type="text"],
+.inline-form input[type="date"],
+.inline-form input[type="search"],
+.inline-form input[type="number"] {
+  padding: 3px 6px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  background: var(--surface);
+  color: var(--ink);
+  font: 13px/1.5 var(--font);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.filters {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 8px 10px;
+  background: #fafaf8;
+  border: 1px solid var(--line-soft);
+  border-radius: 2px;
+}
+
+.filters .field {
+  margin-bottom: 0;
+}
+
+.filters .field > label {
+  font-size: 12px;
+}
+
+/* --------------------------------------------------------------------------
+   13. 分页：.pager .pager a .pager .cur
+   -------------------------------------------------------------------------- */
+
+.pager {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.pager a,
+.pager span {
+  display: inline-block;
+  min-width: 26px;
+  padding: 2px 6px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  background: var(--surface);
+  text-align: center;
+}
+
+.pager a:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.pager .cur {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.pager .disabled,
+.pager .gap {
+  border-color: var(--line-soft);
+  background: transparent;
+  color: var(--ink-faint);
+}
+
+.pager .info {
+  margin-right: 6px;
+  border: 0;
+  background: transparent;
+  color: var(--ink-faint);
+  text-align: left;
+}
+
+/* --------------------------------------------------------------------------
+   14. 键值表：.kv .kv dt .kv dd
+   -------------------------------------------------------------------------- */
+
+.kv {
+  display: grid;
+  grid-template-columns: 108px minmax(0, 1fr);
+  margin: 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+.kv dt {
+  padding: 5px 10px 5px 0;
+  border-bottom: 1px solid var(--line-soft);
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.kv dd {
+  margin: 0;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--line-soft);
+  font-size: 13px;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.kv dd .sub,
+.kv dd .meta {
+  color: var(--ink-faint);
+  font-size: 12px;
+}
+
+/* --------------------------------------------------------------------------
+   15. 照片：.photo-grid .photo-item .photo-item img .photo-item .photo-meta
+   -------------------------------------------------------------------------- */
+
+.photo-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.photo-item {
+  width: 168px;
+  padding: 6px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+}
+
+.photo-item img {
+  display: block;
+  width: 100%;
+  height: 118px;
+  object-fit: cover;
+  background: var(--line-soft);
+  border: 1px solid var(--line-soft);
+  border-radius: 2px;
+}
+
+.photo-item .photo-meta {
+  margin-top: 4px;
+  color: var(--ink-faint);
+  font-size: 12px;
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+.photo-item .photo-meta .inline-form {
+  margin-top: 4px;
+}
+
+/* 缩略图链接：静态缩略图，点击查看大图 */
+a.photo-zoom {
+  display: block;
+}
+
+/* 点开大图的遮罩层（app.js 注入，ESC 或点击遮罩关闭） */
+.photo-zoom-mask {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: #1c1c1c;
+  overflow: auto;
+  cursor: zoom-out;
+}
+
+.photo-zoom-mask img {
+  max-width: 96%;
+  max-height: 92%;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+/* --------------------------------------------------------------------------
+   16. 空状态：.empty
+   -------------------------------------------------------------------------- */
+
+.empty {
+  padding: 22px 12px;
+  border: 1px dashed var(--line);
+  border-radius: 2px;
+  background: var(--surface);
+  color: var(--ink-faint);
+  font-size: 13px;
+  text-align: center;
+}
+
+/* --------------------------------------------------------------------------
+   17. 补充排版辅助与打印
+   -------------------------------------------------------------------------- */
+
+/* 长文本块（详情页的原因/处理方法等） */
+.text-block {
+  font-size: 13px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.muted {
+  color: var(--ink-faint);
+}
+
+/* 窄屏：两列网格收成一列，横条图标签变窄 */
+@media (max-width: 860px) {
+  .form-grid,
+  .range-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .bar-row {
+    grid-template-columns: 110px 1fr 72px;
+  }
+
+  .kv {
+    grid-template-columns: 92px minmax(0, 1fr);
+  }
+}
+
+/* 打印：去掉导航与操作按钮，保留内容 */
+@media print {
+  .topbar,
+  .toolbar,
+  .actions,
+  .filters,
+  .pager,
+  .btn {
+    display: none;
+  }
+
+  body {
+    background: #ffffff;
+  }
+
+  .wrap {
+    max-width: none;
+    padding: 0;
+  }
+
+  .card {
+    border-color: #000000;
+  }
+}

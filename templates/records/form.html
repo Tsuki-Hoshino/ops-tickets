@@ -1,0 +1,146 @@
+{% set nav_active = 'records' %}
+{% set is_edit = (mode == 'edit') %}
+{% set operator_default = (current_user['display_name'] or current_user['username']) if current_user else '' %}
+{% extends "layout.html" %}
+
+{% block title %}{% if is_edit %}编辑工单{% else %}新建工单{% endif %}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>{% if is_edit %}编辑工单{% else %}新建工单{% endif %}</h1>
+  <div class="actions">
+    {% if is_edit and record %}
+    <a class="btn" href="{{ url_for('records.detail', record_id=record['id']) }}">查看详情</a>
+    {% endif %}
+    <a class="btn" href="{{ url_for('records.list') }}">返回列表</a>
+  </div>
+</div>
+
+<form class="form" id="record-form" method="post" action="{{ form_action }}" enctype="multipart/form-data">
+  <script type="application/json" id="category-keywords">{{ keyword_map|tojson }}</script>
+
+  <div class="form-grid">
+    <div class="field">
+      <label for="reported_at">报修时间 <span class="req">*</span></label>
+      <input type="datetime-local" id="reported_at" name="reported_at" value="{{ to_input_value(record['reported_at']) if record else '' }}" required>
+    </div>
+    <div class="field">
+      <label for="arrived_at">到场时间</label>
+      <input type="datetime-local" id="arrived_at" name="arrived_at" value="{{ to_input_value(record['arrived_at']) if record else '' }}">
+    </div>
+    <div class="field">
+      <label for="finished_at">完成时间</label>
+      <input type="datetime-local" id="finished_at" name="finished_at" value="{{ to_input_value(record['finished_at']) if record else '' }}">
+      <div class="hint">填写完成时间即视为已闭环。</div>
+    </div>
+    <div class="field">
+      <label for="department">部门 <span class="req">*</span></label>
+      <input type="text" id="department" name="department" list="department-options" value="{{ record['department'] if record else '' }}" required>
+      <datalist id="department-options">
+        {% for d in departments %}
+        <option value="{{ d }}"></option>
+        {% endfor %}
+      </datalist>
+    </div>
+    <div class="field">
+      <label for="category">类别</label>
+      <select id="category" name="category">
+        <option value="">未选择</option>
+        {% for c in categories %}
+        <option value="{{ c }}"{% if record and record['category'] == c %} selected{% endif %}>{{ c }}</option>
+        {% endfor %}
+      </select>
+      <div class="hint">「需求/故障」填完后焦点离开时，此处仍为空会按关键词自动选中。</div>
+    </div>
+    <div class="field">
+      <label for="operator">操作人</label>
+      <input type="text" id="operator" name="operator" value="{{ record['operator'] if record else operator_default }}">
+    </div>
+    <div class="field">
+      <label for="symptom">需求/故障 <span class="req">*</span></label>
+      <textarea id="symptom" name="symptom" rows="3" required>{{ record['symptom'] if record else '' }}</textarea>
+    </div>
+    <div class="field">
+      <label for="cause">原因</label>
+      <input type="text" id="cause" name="cause" value="{{ record['cause'] if record else '' }}">
+    </div>
+    <div class="field">
+      <label for="solution">处理方法</label>
+      <textarea id="solution" name="solution" rows="3">{{ record['solution'] if record else '' }}</textarea>
+    </div>
+    <div class="field">
+      <label for="notes">备注</label>
+      <textarea id="notes" name="notes" rows="2">{{ record['notes'] if record else '' }}</textarea>
+    </div>
+    <div class="field">
+      <label for="photos_before">处理前照片</label>
+      <input type="file" id="photos_before" name="photos_before[]" multiple accept="image/*"
+             data-photo-compress data-max-edge="{{ photo_config.max_edge }}" data-quality="{{ photo_config.quality }}"
+             data-photo-summary="#before-summary">
+      <div class="hint" id="before-summary"></div>
+    </div>
+    <div class="field">
+      <label for="photos_after">处理后照片</label>
+      <input type="file" id="photos_after" name="photos_after[]" multiple accept="image/*"
+             data-photo-compress data-max-edge="{{ photo_config.max_edge }}" data-quality="{{ photo_config.quality }}"
+             data-photo-summary="#after-summary">
+      <div class="hint" id="after-summary"></div>
+    </div>
+  </div>
+
+  <div class="hint">选好照片后由浏览器自动压缩再提交（最长边 {{ photo_config.max_edge }} 像素、JPEG 质量 {{ photo_config.quality }}），压缩失败就用原图，不需要手动处理；单张不超过 {{ photo_config.max_bytes // 1048576 }} MB。</div>
+
+  <div class="actions">
+    <button class="btn primary" type="submit">保存</button>
+    <a class="btn" href="{% if is_edit and record %}{{ url_for('records.detail', record_id=record['id']) }}{% else %}{{ url_for('records.list') }}{% endif %}">取消</a>
+  </div>
+</form>
+
+{% if is_edit and (photos_before or photos_after) %}
+<div class="card">
+  <div class="card-head">已有照片</div>
+  <div class="field">
+    <label>处理前照片（{{ photos_before|length }} 张）</label>
+    {% if photos_before %}
+    <div class="photo-grid">
+      {% for p in photos_before %}
+      <div class="photo-item">
+        <a class="photo-zoom" href="{{ url_for('main.uploaded_file', filename=p['filename']) }}">
+          <img src="{{ url_for('main.uploaded_file', filename=p['filename']) }}" alt="处理前照片">
+        </a>
+        <div class="photo-meta">
+          <form class="inline-form" method="post" action="{{ url_for('records.delete_photo', record_id=record['id'], photo_id=p['id']) }}" data-confirm="确认删除这张处理前照片？">
+            <button class="btn mini danger" type="submit">删除</button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty">暂无处理前照片。</div>
+    {% endif %}
+  </div>
+  <div class="field">
+    <label>处理后照片（{{ photos_after|length }} 张）</label>
+    {% if photos_after %}
+    <div class="photo-grid">
+      {% for p in photos_after %}
+      <div class="photo-item">
+        <a class="photo-zoom" href="{{ url_for('main.uploaded_file', filename=p['filename']) }}">
+          <img src="{{ url_for('main.uploaded_file', filename=p['filename']) }}" alt="处理后照片">
+        </a>
+        <div class="photo-meta">
+          <form class="inline-form" method="post" action="{{ url_for('records.delete_photo', record_id=record['id'], photo_id=p['id']) }}" data-confirm="确认删除这张处理后照片？">
+            <button class="btn mini danger" type="submit">删除</button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty">暂无处理后照片。</div>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

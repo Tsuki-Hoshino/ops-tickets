@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>登录 · {{ site_name or '运维工单系统' }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body>
+
+<main class="wrap">
+  <div class="page-head">
+    <h1>{{ site_name or '运维工单系统' }}</h1>
+    <div class="actions">
+      <a class="btn" href="{{ url_for('dashboard.index') }}">返回总览</a>
+    </div>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+  <div class="flash {{ category }}">{{ message }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <div class="card" style="max-width:420px;margin:0 auto;">
+    <h2 class="card-head">登录</h2>
+
+    {% if error %}
+    <div class="flash error">{{ error }}</div>
+    {% endif %}
+
+    <form class="form" method="post" action="{{ url_for('auth.login') }}">
+      {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+
+      <div class="field">
+        <label for="username">用户名 <span class="req">*</span></label>
+        <input id="username" name="username" type="text" value="{{ username or '' }}"
+               autocomplete="username" autofocus required>
+      </div>
+
+      <div class="field">
+        <label for="password">密码 <span class="req">*</span></label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required>
+      </div>
+
+      <div class="field">
+        <label for="remember"><input id="remember" name="remember" type="checkbox" value="1"> 记住我</label>
+        <p class="hint">勾选后 30 天内免登录；不勾选则关闭浏览器即失效。</p>
+      </div>
+
+      <div class="actions">
+        <button type="submit" class="btn primary">登录</button>
+      </div>
+    </form>
+  </div>
+</main>
+
+</body>
+</html>

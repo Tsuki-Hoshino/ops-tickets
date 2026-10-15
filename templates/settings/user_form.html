@@ -1,0 +1,58 @@
+{% set nav_active = 'settings' %}
+{% set is_edit = (mode == 'edit') %}
+{% extends "layout.html" %}
+
+{% block title %}{{ '编辑用户' if is_edit else '新增用户' }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>{{ '编辑用户' if is_edit else '新增用户' }}</h1>
+  <div class="actions">
+    <a class="btn" href="{{ url_for('settings.users') }}">返回用户列表</a>
+  </div>
+</div>
+
+<div class="card">
+  <form class="form" method="post" action="{% if is_edit %}{{ url_for('settings.user_edit', user_id=user['id']) }}{% else %}{{ url_for('settings.user_new') }}{% endif %}">
+    <div class="form-grid">
+      <div class="field">
+        <label for="username">用户名 <span class="req">*</span></label>
+        <input type="text" id="username" name="username" value="{{ user['username'] if user else '' }}" required>
+        <div class="hint">登录用账号，需唯一。</div>
+      </div>
+      <div class="field">
+        <label for="display_name">显示名</label>
+        <input type="text" id="display_name" name="display_name" value="{{ user['display_name'] if user else '' }}">
+        <div class="hint">留空则与用户名相同。</div>
+      </div>
+      <div class="field">
+        <label for="role">角色</label>
+        <select id="role" name="role">
+          <option value="admin"{% if user and user['role'] == 'admin' %} selected{% endif %}>管理员（可进入设置页与用户管理）</option>
+          <option value="editor"{% if not user or user['role'] == 'editor' %} selected{% endif %}>编辑（登记与查看工单）</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>状态</label>
+        <label>
+          <input type="checkbox" name="is_active" value="1"{% if not user or user['is_active'] %} checked{% endif %}>
+          启用该账号
+        </label>
+      </div>
+      <div class="field">
+        <label for="password">{% if is_edit %}新密码{% else %}密码 <span class="req">*</span>{% endif %}</label>
+        <input type="password" id="password" name="password" autocomplete="new-password"{% if not is_edit %} required{% endif %} placeholder="{% if is_edit %}留空表示不修改{% else %}必填{% endif %}">
+        {% if is_edit %}<div class="hint">密码框保持掩码或留空时，不会覆盖原密码。</div>{% endif %}
+      </div>
+      <div class="field">
+        <label for="password2">确认密码</label>
+        <input type="password" id="password2" name="password2" autocomplete="new-password"{% if not is_edit %} required{% endif %}>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn primary" type="submit">保存</button>
+      <a class="btn" href="{{ url_for('settings.users') }}">取消</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
